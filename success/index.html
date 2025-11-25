@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Complete Lesson Kit • Your lesson generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --bg: #f8f7f4; --text: #1a2a2f; --accent: #2d5f5d; }
+    body { background: var(--bg); color: var(--text); }
+    .btn { background: var(--accent); color: white; }
+  </style>
+</head>
+<body class="font-sans">
+
+<div class="max-w-4xl mx-auto p-6 pt-12">
+
+  <h1 class="text-3xl font-medium text-center mb-8">Complete Lesson Kit</h1>
+
+  <div class="grid md:grid-cols-2 gap-8">
+    <!-- Form -->
+    <div class="bg-white p-8 rounded-lg border">
+      <h2 class="text-xl font-medium mb-6">Student details</h2>
+      <input id="apiKey" class="w-full p-3 border rounded mb-4" placeholder="Your OpenAI API key (sk-…)" type="password">
+      <input id="name" class="w-full p-3 border rounded mb-4" placeholder="Student name (optional but nice)">
+      <input id="level" class="w-full p-3 border rounded mb-4" placeholder="Exact level e.g. Mid B2, C1-, A2+">
+      <input id="target" class="w-full p-3 border rounded mb-4" placeholder="Exam / goal (IELTS 7.0, FCE, Business, etc.)">
+      <textarea id="weaknesses" rows="4" class="w-full p-3 border rounded mb-4" placeholder="Specific errors / pronunciation issues, e.g. articles, third-person -s, thinks/thinks"></textarea>
+      <input id="topic" class="w-full p-3 border rounded mb-4" placeholder="Today’s topic">
+      <select id="length" class="w-full p-3 border rounded mb-6">
+        <option>60 minutes</option>
+        <option>45 minutes</option>
+        <option>30 minutes</option>
+      </select>
+      <button onclick="generate()" class="w-full py-4 rounded-lg btn text-xl font-medium">Generate my lesson →</button>
+    </div>
+
+    <!-- Output -->
+    <div class="bg-white p-8 rounded-lg border">
+      <h2 class="text-xl font-medium mb-4">Your lesson (ready to copy)</h2>
+      <pre id="output" class="whitespace-pre-wrap text-sm"></pre>
+      <button onclick="copy()" class="mt-4 px-6 py-2 bg-gray-200 rounded">Copy to clipboard</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function generate() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) return alert('Please paste your OpenAI API key');
+
+  const data = {
+    name: document.getElementById('name').value || "the student",
+    level: document.getElementById('level').value,
+    target: document.getElementById('target').value,
+    weaknesses: document.getElementById('weaknesses').value,
+    topic: document.getElementById('topic').value,
+    length: document.getElementById('length').value
+  };
+
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      temperature: 0.7,
+      max_tokens: 3000,
+      messages: [
+        { role: "system", content: `You are an expert 1-to-1 ESL tutor with 15 years experience. Create a complete, beautiful, ready-to-teach ${data.length} lesson for a student named ${data.name} at ${data.level} level. Goal: ${data.target || "general improvement"}. Specific weaknesses: ${data.weaknesses || "none listed"}. Topic: ${data.topic}. Include warm-up, presentation of 8–12 target items with examples using the student's name, short reading text, practice exercises, personalised speaking task, pronunciation drills for the listed errors, and homework. Use clear headings and markdown formatting.` },
+        { role: "user", content: "Create the lesson now." }
+      ]
+    })
+  });
+
+  const result = await response.json();
+  document.getElementById('output').textContent = result.choices[0].message.content;
+}
+
+function copy() {
+  navigator.clipboard.writeText(document.getElementById('output').textContent);
+  alert("Copied!");
+}
+</script>
+
+</body>
+</html>
