@@ -22,6 +22,7 @@
     <div class="bg-white p-8 rounded-lg border">
       <h2 class="text-xl font-medium mb-6">Student details</h2>
       <input id="apiKey" class="w-full p-3 border rounded mb-4" placeholder="Your OpenAI API key (sk-…)" type="password">
+      
       <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-6 text-sm">
   <p class="font-medium mb-2">Never used an API key before? 45 seconds →</p>
   <ol class="list-decimal pl-5 space-y-1">
@@ -47,8 +48,13 @@
 
     <!-- Output -->
     <div class="bg-white p-8 rounded-lg border">
-      <h2 class="text-xl font-medium mb-4">Your Editable lesson (ready to copy)</h2>
-            <button onclick="copy()" class="mt-4 px-6 py-2 bg-gray-200 rounded">Copy to clipboard</button>
+      <h2 class="text-xl font-medium mb-4">Your lesson (ready to copy)</h2>
+          <button onclick="copy()" class="mt-4 px-6 py-2 bg-gray-200 rounded">Copy to clipboard</button>
+
+      <button onclick="downloadDocx()" 
+        class="mt-4 ml-4 px-8 py-3 bg-[#2d5f5d] text-white rounded-lg font-medium hover:bg-[#1e3f3d]">
+  Download as Word document (ready to edit/print)
+</button>
       <pre id="output" class="whitespace-pre-wrap text-sm"></pre>
     </div>
   </div>
@@ -94,6 +100,35 @@ function copy() {
   alert("Copied!");
 }
 </script>
+<script src="https://unpkg.com/docx@8.5.0/build/index.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
+<script>
+async function downloadDocx() {
+  const text = document.getElementById('output').innerText;
+  if (!text) return alert("Generate a lesson first!");
+
+  const doc = new docx.Document({
+    creator: "Complete Lesson Kit",
+    title: "Personalised ESL Lesson",
+    styles: { paragraphStyles: [{ id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true, run: { size: 32, bold: true, color: "2d5f5d" }}]},
+    sections: [{
+      properties: {},
+      children: text.split('\n').map(line => {
+        if (line.startsWith('# ')) return new docx.Paragraph({ text: line.slice(2), heading: docx.HeadingLevel.HEADING_1 });
+        if (line.startsWith('## ')) return new docx.Paragraph({ text: line.slice(3), heading: docx.HeadingLevel.HEADING_2 });
+        if (line.startsWith('### ')) return new docx.Paragraph({ text: line.slice(4), heading: docx.HeadingLevel.HEADING_3 });
+        if (line.startsWith('- ') || line.startsWith('1.') || line.startsWith('2.')) return new docx.Paragraph({ text: line, bullet: { level: 0 } });
+        if (line.startsWith('**') || line.includes('Sara')) return new docx.Paragraph({ text: line.replace(/\*\*(.*?)\*\*/g, '$1'), run: { bold: line.startsWith('**') } });
+        return new docx.Paragraph(line);
+      })
+    }]
+  });
+
+  docx.Packer.toBlob(doc).then(blob => {
+    saveAs(blob, "Lesson_" + (document.getElementById('name').value || "Student") + ".docx");
+  });
+}
+</script>
 </body>
 </html>
