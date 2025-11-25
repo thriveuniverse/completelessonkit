@@ -104,29 +104,72 @@ function copy() {
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
 <script>
-async function downloadDocx() {
+function downloadDocx() {
+  // Wait until the docx library is actually ready
+  if (typeof docx === "undefined" || !docx.Document) {
+    alert("Library still loading… wait 1–2 seconds and try again (or refresh the page)");
+    return;
+  }
+
   const text = document.getElementById('output').innerText;
-  if (!text) return alert("Generate a lesson first!");
+  if (!text.trim()) {
+    alert("Generate a lesson first!");
+    return;
+  }
+
+  const paragraphs = [];
+  const lines = text.split('\n');
+
+  for (let rawLine of lines) {
+    let line = rawLine.trim();
+    if (!line) {
+      paragraphs.push(new docx.Paragraph({ children: [new docx.TextRun("")] }));
+      continue;
+    }
+
+    if (line.startsWith('# ')) {
+      paragraphs.push(new docx.Paragraph({
+        text: line.slice(2),
+        heading: docx.HeadingLevel.HEADING_1
+      }));
+    } else if (line.startsWith('## ')) {
+      paragraphs.push(new docx.Paragraph({
+        text: line.slice(3),
+        heading: docx.HeadingLevel.HEADING_2
+      }));
+    } else if (line.startsWith('### ')) {
+      paragraphs.push(new docx.Paragraph({
+        text: line.slice(4),
+        heading: docx.HeadingLevel.HEADING_3
+      }));
+    } else if (line.match(/^(\d+\.|- |\* )/)) {
+      paragraphs.push(new docx.Paragraph({
+        text: line.replace(/^(\d+\.|- |\* )\s*/, ''),
+        bullet: { level: 0 }
+      }));
+    } else if (line.startsWith('**') && line.endsWith('**')) {
+      paragraphs.push(new docx.Paragraph({
+        text: line.slice(2, -2),
+        style: "strong"
+      }));
+    } else {
+      paragraphs.push(new docx.Paragraph({
+        text: line
+      }));
+    }
+  }
 
   const doc = new docx.Document({
     creator: "Complete Lesson Kit",
-    title: "Personalised ESL Lesson",
-    styles: { paragraphStyles: [{ id: "Heading1", name: "Heading 1", basedOn: "Normal", next: "Normal", quickFormat: true, run: { size: 32, bold: true, color: "2d5f5d" }}]},
-    sections: [{
-      properties: {},
-      children: text.split('\n').map(line => {
-        if (line.startsWith('# ')) return new docx.Paragraph({ text: line.slice(2), heading: docx.HeadingLevel.HEADING_1 });
-        if (line.startsWith('## ')) return new docx.Paragraph({ text: line.slice(3), heading: docx.HeadingLevel.HEADING_2 });
-        if (line.startsWith('### ')) return new docx.Paragraph({ text: line.slice(4), heading: docx.HeadingLevel.HEADING_3 });
-        if (line.startsWith('- ') || line.startsWith('1.') || line.startsWith('2.')) return new docx.Paragraph({ text: line, bullet: { level: 0 } });
-        if (line.startsWith('**') || line.includes('Sara')) return new docx.Paragraph({ text: line.replace(/\*\*(.*?)\*\*/g, '$1'), run: { bold: line.startsWith('**') } });
-        return new docx.Paragraph(line);
-      })
-    }]
+    sections: [{ children: paragraphs }]
   });
 
   docx.Packer.toBlob(doc).then(blob => {
-    saveAs(blob, "Lesson_" + (document.getElementById('name').value || "Student") + ".docx");
+    const name = document.getElementById('name').value || "Student";
+    saveAs(blob, `Lesson_${name}.docx`);
+  }).catch(err => {
+    console.error(err);
+    alert("Something went wrong – open browser console (F12) and tell me the error");
   });
 }
 </script>
