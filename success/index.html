@@ -22,6 +22,16 @@
     <div class="bg-white p-8 rounded-lg border">
       <h2 class="text-xl font-medium mb-6">Student details</h2>
       <input id="apiKey" class="w-full p-3 border rounded mb-4" placeholder="Your OpenAI API key (sk-…)" type="password">
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mt-6 text-sm">
+  <p class="font-medium mb-2">Never used an API key before? 45 seconds →</p>
+  <ol class="list-decimal pl-5 space-y-1">
+    <li>Go to <a href="https://platform.openai.com/api-keys" target="_blank" class="underline">platform.openai.com/api-keys</a></li>
+    <li>Click “Create new secret key” → copy it</li>
+    <li>Paste it here → click “Save my key” below (we store it in your browser only)</li>
+  </ol>
+  <p class="mt-3 text-xs text-gray-600">Costs you ~2–3¢ per lesson. You stay in full control — revoke any time.</p>
+</div>
+<button onclick="localStorage.setItem('savedKey', document.getElementById('apiKey').value); alert('Key saved!')" class="mt-4 px-6 py-2 bg-gray-200 rounded">Save my key for next time</button>
       <input id="name" class="w-full p-3 border rounded mb-4" placeholder="Student name (optional but nice)">
       <input id="level" class="w-full p-3 border rounded mb-4" placeholder="Exact level e.g. Mid B2, C1-, A2+">
       <input id="target" class="w-full p-3 border rounded mb-4" placeholder="Exam / goal (IELTS 7.0, FCE, Business, etc.)">
